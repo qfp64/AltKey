@@ -1,14 +1,52 @@
-à   a1
-ä   a2
-á   a3
-ã   a4
-â   a6
-å   a0
+# Keymap file
+# Comments start with a #.
+
+# The general format is:
+#   glyph [whitespace] key-sequence
+# where key-sequence represents a pair of keys.
+# For example,
+#   á   a3
+# Assuming the hotkey is AltGr, pressing AltGr+a and then 3 will generate á.
+
+# Rules can be grouped with []:
+#   [áéíóú]   [aeiou]3
+# Pressing AltGr plus any of [aeiou] and then 3 will generate the corresponding glyph.
+
+
+
+
+# Vowels with diacritics
+
+[àèìòùẁỳ] [aeiouwy]1
+[äëïöüẅÿ] [aeiouwy]2
+[áéíóúẃý] [aeiouwy]3
+[ãẽĩõũỹ]  [aeiouy]4
+[âêîôûŵŷ] [aeiouwy]6
+
 ā   a-
 
+å   a0
+Å   A0
 æ   ae
+Æ   AE
 ą   a,
 
 
+
 ™   tm
+©   co
+®   ro
+ñ   ny
+µ   mu
+ç   c,
+Ç   C,
+¿   qq
+ð   dh
+Ð   DH
+ß   ss
+§   SS
 þ   th
+Þ   TH
+«   <<
+»   >>
+

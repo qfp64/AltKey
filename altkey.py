@@ -22,6 +22,9 @@ class KeymapParser():
         pass
 
     def split_line(self, line):
+        if len(line) > 0:
+            if line[0] == '#':
+                return []
         return line.split()
 
     def parse(self, map_file):
@@ -33,16 +36,37 @@ class KeymapParser():
             ld = line.decode().strip()
             ls = self.split_line(ld)
             if len(ls) == 2:
-                # definition
                 glyph = ls[0]
-                if len(glyph) != 1:
-                    return False, f'line {self.lnum}: glyphs must be a single character (got "{glyph}")'
                 sequence = ls[1]
-                if len(sequence) != 2:
-                    return False, f'line {self.lnum}: key sequences must be of length 2 (got "{sequence}")'
-                if sequence[0] not in keymap:
-                    keymap[sequence[0]] = {}
-                keymap[sequence[0]][sequence[1]] = glyph
+
+                if glyph[0] == '[':
+                    # Group: [glyphs] [
+                    if glyph[-1] != ']':
+                        return False, f'line {self.lnum}: missing ] to close group'
+                    glyph_group = glyph[1:-1]
+                    if sequence[0] != '[':
+                        return False, f'line {self.lnum}: missing [ to start key group'
+                    if sequence[-2] != ']': #hacky pls fix
+                        return False, f'line {self.lnum}: missing ] to close key group'
+                    key_group = sequence[1:-2]
+                    final_key = sequence[-1]
+
+                    if len(glyph_group) != len(key_group):
+                        return False, f'line {self.lnum}: glyph and key groups must be the same length'
+
+                    for i in range(len(glyph_group)):
+                        if key_group[i] not in keymap:
+                            keymap[key_group[i]] = {}
+                        keymap[key_group[i]][final_key] = glyph_group[i]
+
+                else:
+                    if len(glyph) != 1:
+                        return False, f'line {self.lnum}: glyphs must be a single character (got "{glyph}")'
+                    if len(sequence) != 2:
+                        return False, f'line {self.lnum}: key sequences must be of length 2 (got "{sequence}")'
+                    if sequence[0] not in keymap:
+                        keymap[sequence[0]] = {}
+                    keymap[sequence[0]][sequence[1]] = glyph
             elif len(ls) == 0:
                 # blank line
                 continue
@@ -66,6 +90,7 @@ class KeyboardListener():
         hm.HookKeyboard()
 
     def key_down(self, event):
+        self.print_event(event)
         if event.Key in MODIFIERS:
             # Track the state of the modifier keys
             self.modifiers[event.Key] = True
