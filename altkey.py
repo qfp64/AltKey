@@ -1,13 +1,10 @@
 from __future__ import print_function
 import sys
-from PyQt5.QtWidgets import QWidget, QPushButton, QApplication, QFrame
-import PyQt5.QtWidgets as QtWidgets
-from PyQt5.QtGui import QColor
+from PyQt5.QtWidgets import *
+from PyQt5.QtGui import *
 import PyQt5.QtCore as QtCore
-import threading
-import pyWinhook as pyHook
-import time
 
+import pyWinhook as pyHook
 import win32api, win32con
 import kb
 
@@ -16,9 +13,46 @@ def capslock_state():
 
 MODIFIERS = ('Lcontrol', 'Rcontrol', 'Lshift', 'Rshift', 'Lmenu', 'Rmenu')
 SHIFT = ('Lshift', 'Rshift')
+KEYMAP_FILE = "keymap.txt"
 
 hotkey = 'Rmenu' # AltGr
-keymap = {'a': {'1':'á', '2':'ä', '6':'â', '-':'ā'}, 'A': {'1': 'Á'}}
+
+class KeymapParser():
+    def __init__(self):
+        pass
+
+    def split_line(self, line):
+        return line.split()
+
+    def parse(self, map_file):
+        self.lnum = 0
+        keymap = {}
+        lines = open(map_file, 'rb').readlines()
+        for lnum, line in enumerate(lines):
+            self.lnum = lnum+1
+            ld = line.decode().strip()
+            ls = self.split_line(ld)
+            if len(ls) == 2:
+                # definition
+                glyph = ls[0]
+                if len(glyph) != 1:
+                    return False, f'line {self.lnum}: glyphs must be a single character (got "{glyph}")'
+                sequence = ls[1]
+                if len(sequence) != 2:
+                    return False, f'line {self.lnum}: key sequences must be of length 2 (got "{sequence}")'
+                if sequence[0] not in keymap:
+                    keymap[sequence[0]] = {}
+                keymap[sequence[0]][sequence[1]] = glyph
+            elif len(ls) == 0:
+                # blank line
+                continue
+            else:
+                return False, f"line {self.lnum}: syntax error"
+
+        print(keymap)
+        return True, keymap
+
+
 
 class KeyboardListener():
     def __init__(self):
@@ -33,7 +67,9 @@ class KeyboardListener():
 
     def key_down(self, event):
         if event.Key in MODIFIERS:
+            # Track the state of the modifier keys
             self.modifiers[event.Key] = True
+
         elif self.active:
             # Active - look for 2nd key
             window.sig_close.emit()
@@ -65,7 +101,7 @@ class KeyboardListener():
                     # Stop key propagating
                     return False
 
-        #print(f'(Propagating {event.Key})')
+        # Returning True allows the keypress to propagate to whatever window is active
         return True
 
     def key_up(self, event):
@@ -81,10 +117,27 @@ class KeyboardListener():
 class Option(QWidget):
     def __init__(self, t, b):
         super().__init__()
-        self.layout = QtWidgets.QVBoxLayout()
+        self.layout = QVBoxLayout()
         self.setLayout(self.layout)
-        top = QtWidgets.QLabel(t)
-        bottom = QtWidgets.QLabel(b)
+        self.layout.setSpacing(5)
+        self.layout.setContentsMargins(0,0,0,0)
+        
+        # Character
+        top = QLabel(t)
+        top.setFont(QFont('Arial', 24))
+        top.setAlignment(QtCore.Qt.AlignCenter)
+        top.setStyleSheet("border: 0px solid red;")
+        
+        # Key
+        key_size = 30
+        key_font_size = 16
+        bottom = QLabel(b)
+        bottom.setFixedWidth(key_size)
+        bottom.setFixedHeight(key_size)
+        bottom.setFont(QFont('Arial', key_font_size))
+        bottom.setAlignment(QtCore.Qt.AlignCenter)
+        bottom.setStyleSheet("border: 1px solid #707070; border-radius: 5px;")
+        
         self.layout.addWidget(top)
         self.layout.addWidget(bottom)
 
@@ -98,7 +151,7 @@ class Window(QWidget):
 
         #self.resize(800, 200)
         #self.setGeometry(300,300,300,300)
-        self.layout = QtWidgets.QHBoxLayout()
+        self.layout = QHBoxLayout()
         self.setLayout(self.layout)        
         self.options = []
         self.sig_key.connect(self.key)
@@ -112,7 +165,7 @@ class Window(QWidget):
         options = keymap.get(key)
         if not options: return
         for k in options:
-            opt = Option(k, options[k])
+            opt = Option(options[k], k)
             self.options.append(opt)
             self.layout.addWidget(opt)
 
@@ -133,6 +186,16 @@ class Window(QWidget):
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
+
+    # Read keymap file
+    parser = KeymapParser()
+    parse_ok, output = parser.parse(KEYMAP_FILE)
+    if not parse_ok:
+        print("Reading the keymap file failed:\n{}".format(output))
+        sys.exit(-1)
+    else:
+        keymap = output
+
     window = Window()
     listener = KeyboardListener()
     app.exec_()
