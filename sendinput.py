@@ -81,7 +81,7 @@ def keyboard_input(code, flags):
 def keyboard_event(code, flags=KEYEVENTF_UNICODE):
     return input_structure(keyboard_input(code, flags))
 
-def press(character):
+def generate_keypress(character):
     code = ord(character)
     send_input(keyboard_event(code))
     send_input(keyboard_event(code, KEYEVENTF_KEYUP))
@@ -90,5 +90,5 @@ def press(character):
 if __name__ == '__main__':
     time.sleep(3)
     for char in u'O\nשש2E6UXoשש2E^uXh#:SHn&HQ':
-        press(char)
+        generate_keypress(char)
         time.sleep(0.1)

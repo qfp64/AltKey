@@ -5,30 +5,15 @@ from PyQt5.QtGui import *
 import PyQt5.QtCore as QtCore
 
 import pyWinhook as pyHook
-import ctypes
+import ctypes, string
 import win32api, win32con
-import kb
-import string
+from sendinput import generate_keypress
 
-def capslock_state():
-    return win32api.GetKeyState(win32con.VK_CAPITAL)
 
 MODIFIERS = ('Lcontrol', 'Rcontrol', 'Lshift', 'Rshift', 'Lmenu', 'Rmenu')
 SHIFT = ('Lshift', 'Rshift')
 KEYMAP_FILE = "keymap.txt"
-
 hotkey = 'Rmenu' # AltGr
-
-
-# Build a table mapping "extended scancodes" to ascii chars
-# The return value of OemKeyScan is considered to be an "extended" scancode -
-# it's the scancode with the high dword containing the modifier bits
-EXT_SCANCODE_TO_ASCII = {}
-for c in range(256):
-    scancode = ctypes.windll.user32.OemKeyScan(c)
-    if scancode != -1:
-        EXT_SCANCODE_TO_ASCII[scancode] = chr(c)
-EXT_SHIFT = 0x10000
 
 
 class KeymapParser():
@@ -102,6 +87,20 @@ class KeyboardListener():
         hm.KeyUp = self.key_up
         hm.HookKeyboard()
 
+        # Build a table mapping "extended scancodes" to ascii chars
+        # The return value of OemKeyScan is considered to be an "extended" scancode -
+        # it's the scancode with the high dword containing the modifier bits
+        self.EXT_SCANCODE_TO_ASCII = {}
+        for c in range(256):
+            scancode = ctypes.windll.user32.OemKeyScan(c)
+            if scancode != -1:
+                self.EXT_SCANCODE_TO_ASCII[scancode] = chr(c)
+        self.EXT_SHIFT = 0x10000
+
+    # Return current caps lock state
+    def capslock_state(self):
+        return win32api.GetKeyState(win32con.VK_CAPITAL)        
+
     # Get an ASCII character from a key event.
     # pyWinhook returns an ascii character, but e.g. on a UK keyboard, AltGr+A will return á, when
     # we really want a (or A, depending on shift/caps lock). To get this base character we have to
@@ -110,14 +109,14 @@ class KeyboardListener():
         ext_scancode = event.ScanCode
         shifted = self.modifiers[SHIFT[0]] or self.modifiers[SHIFT[1]]
         if shifted:
-            ext_scancode |= EXT_SHIFT
+            ext_scancode |= self.EXT_SHIFT
 
-        key = EXT_SCANCODE_TO_ASCII.get(ext_scancode)
+        key = self.EXT_SCANCODE_TO_ASCII.get(ext_scancode)
         if not key: return None
 
         # Deal with caps lock for letters
         if key in string.ascii_letters:
-            caps = capslock_state()
+            caps = self.capslock_state()
             if caps:
                 if key in string.ascii_uppercase:
                     key = key.lower()
@@ -142,7 +141,7 @@ class KeyboardListener():
                 # Generate output keypress if there is one
                 if output: 
                     print("Generating", output)
-                    kb.press(output)
+                    generate_keypress(output)
             return False
         else:
             # Inactive - look for hotkey + valid key
@@ -164,7 +163,7 @@ class KeyboardListener():
 
     def print_event(self, event):
         print(f'MessageName="{event.MessageName}"')
-        print(f'ASCII: {event.Ascii} ({chr(event.Ascii)})\tScancode={event.ScanCode}\tExt={event.Extended}\tAlt={event.Alt}\tKeyID={event.KeyID}\tKey={event.Key}\tmod={[k for k in self.modifiers if self.modifiers[k]]}\tcap={capslock_state()}')
+        print(f'ASCII: {event.Ascii} ({chr(event.Ascii)})\tScancode={event.ScanCode}\tExt={event.Extended}\tAlt={event.Alt}\tKeyID={event.KeyID}\tKey={event.Key}\tmod={[k for k in self.modifiers if self.modifiers[k]]}\tcap={self.capslock_state()}')
     
 
 class Option(QWidget):
