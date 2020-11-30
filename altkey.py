@@ -5,8 +5,10 @@ from PyQt5.QtGui import *
 import PyQt5.QtCore as QtCore
 
 import pyWinhook as pyHook
+import ctypes
 import win32api, win32con
 import kb
+import string
 
 def capslock_state():
     return win32api.GetKeyState(win32con.VK_CAPITAL)
@@ -16,6 +18,18 @@ SHIFT = ('Lshift', 'Rshift')
 KEYMAP_FILE = "keymap.txt"
 
 hotkey = 'Rmenu' # AltGr
+
+
+# Build a table mapping "extended scancodes" to ascii chars
+# The return value of OemKeyScan is considered to be an "extended" scancode -
+# it's the scancode with the high dword containing the modifier bits
+EXT_SCANCODE_TO_ASCII = {}
+for c in range(256):
+    scancode = ctypes.windll.user32.OemKeyScan(c)
+    if scancode != -1:
+        EXT_SCANCODE_TO_ASCII[scancode] = chr(c)
+EXT_SHIFT = 0x10000
+
 
 class KeymapParser():
     def __init__(self):
@@ -73,7 +87,6 @@ class KeymapParser():
             else:
                 return False, f"line {self.lnum}: syntax error"
 
-        print(keymap)
         return True, keymap
 
 
@@ -89,8 +102,32 @@ class KeyboardListener():
         hm.KeyUp = self.key_up
         hm.HookKeyboard()
 
+    # Get an ASCII character from a key event.
+    # pyWinhook returns an ascii character, but e.g. on a UK keyboard, AltGr+A will return á, when
+    # we really want a (or A, depending on shift/caps lock). To get this base character we have to
+    # look at the scan code and modifiers.
+    def get_ascii(self, event):
+        ext_scancode = event.ScanCode
+        shifted = self.modifiers[SHIFT[0]] or self.modifiers[SHIFT[1]]
+        if shifted:
+            ext_scancode |= EXT_SHIFT
+
+        key = EXT_SCANCODE_TO_ASCII.get(ext_scancode)
+        if not key: return None
+
+        # Deal with caps lock for letters
+        if key in string.ascii_letters:
+            caps = capslock_state()
+            if caps:
+                if key in string.ascii_uppercase:
+                    key = key.lower()
+                else: 
+                    key = key.upper()
+        print(f"** {key}")
+        return key
+
     def key_down(self, event):
-        self.print_event(event)
+        if event.Key == 'Packet': return True
         if event.Key in MODIFIERS:
             # Track the state of the modifier keys
             self.modifiers[event.Key] = True
@@ -101,30 +138,21 @@ class KeyboardListener():
             self.active = False
             options = keymap.get(self.base_key)
             if options:
-                output = options.get(chr(event.Ascii))
+                output = options.get(self.get_ascii(event))
                 # Generate output keypress if there is one
                 if output: 
+                    print("Generating", output)
                     kb.press(output)
             return False
         else:
             # Inactive - look for hotkey + valid key
             if self.modifiers[hotkey]:
-                key = event.KeyID
-                if key >= 65 and key <= 90: # A-Z keys only
-                    shift = self.modifiers[SHIFT[0]] or self.modifiers[SHIFT[1]]
-                    caps = capslock_state()
-                    uppercase = shift ^ caps
-                    if not uppercase:
-                        key += 0x20
+                self.base_key = self.get_ascii(event)
+                self.active = True
+                window.sig_key.emit(self.base_key)
 
-                    print(chr(key))
-                    self.active = True
-                    self.base_key = chr(key)
-
-                    window.sig_key.emit(self.base_key)
-
-                    # Stop key propagating
-                    return False
+                # Capture keypress
+                return False
 
         # Returning True allows the keypress to propagate to whatever window is active
         return True
