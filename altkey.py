@@ -16,7 +16,11 @@ KEYMAP_FILE = "keymap.txt"
 hotkey = 'Rmenu' # AltGr
 
 
+
+
 class KeymapParser():
+    NEWLINE = 1
+
     def __init__(self):
         pass
 
@@ -26,52 +30,101 @@ class KeymapParser():
                 return []
         return line.split()
 
-    def parse(self, map_file):
-        self.lnum = 0
-        keymap = {}
-        lines = open(map_file, 'rb').readlines()
-        for lnum, line in enumerate(lines):
-            self.lnum = lnum+1
-            ld = line.decode().strip()
-            ls = self.split_line(ld)
-            if len(ls) == 2:
-                sequence = ls[0]
-                glyph = ls[1]
+    def tokenise(self, lines):
+        tokens = []
+        for num, line in enumerate(lines):
+            words = line.decode().strip().split()
 
-                if sequence[0] == '[':
-                    pass
-                    # # Group: [glyphs] [
-                    # if glyph[-1] != ']':
-                    #     return False, f'line {self.lnum}: missing ] to close group'
-                    # glyph_group = glyph[1:-1]
-                    # if sequence[0] != '[':
-                    #     return False, f'line {self.lnum}: missing [ to start key group'
-                    # if sequence[-2] != ']': #hacky pls fix
-                    #     return False, f'line {self.lnum}: missing ] to close key group'
-                    # key_group = sequence[1:-2]
-                    # final_key = sequence[-1]
+            # Strip out comments 
+            comment_pos = None
+            for idx, word in enumerate(words):
+                if word[0] == '#':
+                    comment_pos = idx
+                    break
+            if comment_pos is not None:
+                words = words[0:comment_pos]
 
-                    # if len(glyph_group) != len(key_group):
-                    #     return False, f'line {self.lnum}: glyph and key groups must be the same length'
-
-                    # for i in range(len(glyph_group)):
-                    #     if key_group[i] not in keymap:
-                    #         keymap[key_group[i]] = {}
-                    #     keymap[key_group[i]][final_key] = glyph_group[i]
-
-                else:
-                    if len(glyph) != 1:
-                        return False, f'line {self.lnum}: glyphs must be a single character (got "{glyph}")'
-                    if len(sequence) != 2:
-                        return False, f'line {self.lnum}: key sequences must be of length 2 (got "{sequence}")'
-                    if sequence[0] not in keymap:
-                        keymap[sequence[0]] = {}
-                    keymap[sequence[0]][sequence[1]] = glyph
-            elif len(ls) == 0:
-                # blank line
+            if len(words) == 0:
+                # Blank line
                 continue
-            else:
-                return False, f"line {self.lnum}: syntax error"
+
+            tokens += [self.NEWLINE, num+1]
+            tokens.extend(words)
+            
+        tokens += [self.NEWLINE, num+1]
+        self.tokens = tokens
+        self.idx = 0
+        self.line_number = 0
+        self.newline()
+
+    def next(self):
+        try:
+            token = self.tokens[self.idx]
+            self.idx += 1
+        except:
+            return None
+        return token
+
+    def newline(self):
+        t = self.next()
+        if t != self.NEWLINE:
+            raise Exception(f"Line {self.line_number}: expected newline")
+        self.line_number = self.next()
+
+    def parse(self, map_file):
+        keymap = {}
+
+        lines = open(map_file, 'rb').readlines()
+        self.tokenise(lines)
+
+        while True:
+            t1 = self.next()
+            if not t1: break
+            t2 = self.next()
+            print(t1, t2)
+            self.newline()
+
+            sequence = t1
+            glyph = t2
+
+            if len(glyph) != 1:
+                return False, f'line {self.line_number}: glyphs must be a single character (got "{glyph}")'
+            if len(sequence) != 2:
+                return False, f'line {self.line_number}: key sequences must be of length 2 (got "{sequence}")'
+            if sequence[0] not in keymap:
+                keymap[sequence[0]] = {}
+
+            if sequence[1] in keymap[sequence[0]]:
+                print(f'WARNING: {sequence[0]}{sequence[1]} {glyph} overwrites {keymap[sequence[0]][sequence[1]]}')
+            keymap[sequence[0]][sequence[1]] = glyph
+
+                   
+            # if len(ls) == 2:
+            #     sequence = ls[0]
+            #     glyph = ls[1]
+
+            #     if sequence[0] == '[':
+            #         pass
+            #         # # Group: [glyphs] [
+            #         # if glyph[-1] != ']':
+            #         #     return False, f'line {self.lnum}: missing ] to close group'
+            #         # glyph_group = glyph[1:-1]
+            #         # if sequence[0] != '[':
+            #         #     return False, f'line {self.lnum}: missing [ to start key group'
+            #         # if sequence[-2] != ']': #hacky pls fix
+            #         #     return False, f'line {self.lnum}: missing ] to close key group'
+            #         # key_group = sequence[1:-2]
+            #         # final_key = sequence[-1]
+
+            #         # if len(glyph_group) != len(key_group):
+            #         #     return False, f'line {self.lnum}: glyph and key groups must be the same length'
+
+            #         # for i in range(len(glyph_group)):
+            #         #     if key_group[i] not in keymap:
+            #         #         keymap[key_group[i]] = {}
+            #         #     keymap[key_group[i]][final_key] = glyph_group[i]
+
+            #     else:
 
         return True, keymap
 
@@ -169,6 +222,9 @@ class KeyboardListener():
 
 class Option(QWidget):
     def __init__(self, t, b):
+        glyph_font = 'Arial'
+        key_font = 'Trebuchet MS'
+
         super().__init__()
         self.layout = QVBoxLayout()
         self.setLayout(self.layout)
@@ -177,7 +233,7 @@ class Option(QWidget):
         
         # Character
         top = QLabel(t)
-        top.setFont(QFont('Arial', 24))
+        top.setFont(QFont(glyph_font, 24))
         top.setAlignment(QtCore.Qt.AlignCenter)
         top.setStyleSheet("border: 0px solid red;")
         
@@ -187,7 +243,7 @@ class Option(QWidget):
         bottom = QLabel(b)
         bottom.setFixedWidth(key_size)
         bottom.setFixedHeight(key_size)
-        bottom.setFont(QFont('Arial', key_font_size))
+        bottom.setFont(QFont(key_font, key_font_size))
         bottom.setAlignment(QtCore.Qt.AlignCenter)
         bottom.setStyleSheet("border: 1px solid #707070; border-radius: 5px;")
         
@@ -248,6 +304,8 @@ if __name__ == '__main__':
         sys.exit(-1)
     else:
         keymap = output
+
+    print(keymap)
 
     window = Window()
     listener = KeyboardListener()
