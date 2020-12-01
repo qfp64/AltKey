@@ -17,35 +17,187 @@
 
 # Vowels with diacritics
 
-[àèìòùẁỳ] [aeiouwy]1
-[äëïöüẅÿ] [aeiouwy]2
-[áéíóúẃý] [aeiouwy]3
-[ãẽĩõũỹ]  [aeiouy]4
-[âêîôûŵŷ] [aeiouwy]6
-
-ā   a-
-
-å   a0
-Å   A0
-æ   ae
-Æ   AE
-ą   a,
+# [àèìòùẁỳ] [aeiouwy]1
+# [äëïöüẅÿ] [aeiouwy]2
+# [áéíóúẃý] [aeiouwy]3
+# [ãẽĩõũỹ]  [aeiouy]4
+# [âêîôûŵŷ] [aeiouwy]6
 
 
+a1      à
+a3      á
+a0      å
 
-™   tm
-©   co
-®   ro
-ñ   ny
-µ   mu
-ç   c,
-Ç   C,
-¿   qq
-ð   dh
-Ð   DH
-ß   ss
-§   SS
-þ   th
-Þ   TH
-«   <<
-»   >>
+# ga      α
+# gb      β
+# gg      γ
+# gd      δ
+# g3      ε
+# gz      ζ
+# ge      η
+# gh      θ
+# gi      ι
+# gk      κ
+# gl      λ
+# gm      μ
+# gn      ν
+# gx      ξ
+# go      ο
+# gp      π
+# gr      ρ
+# gs      σ
+# gt      τ
+# gy      υ
+# gf      φ
+# gc      χ
+# gq      ψ
+# gw      ω
+
+# Greek letters
+
+al      α
+be      β
+ga      γ
+de      δ
+ep      ε
+ze      ζ
+et      η
+th      θ
+io      ι
+ka      κ
+la      λ
+mu      μ
+xi      ξ
+pi      π
+rh      ρ
+si      σ
+sI      Σ
+ta      τ
+up      υ
+ph      φ
+ch      χ
+ps      ψ
+om      ω
+oh      Ω
+
+# International Phonetic Alphabet
+
+# Vowels: v + X-SAMPA with a couple of exceptions
+
+# Close
+vI      ɪ
+vY      ʏ
+v1      ɨ
+v}      ʉ
+vM      ɯ
+vU      ʊ
+v2      ø
+# Mid
+v9      ɘ
+v8      ɵ
+v7      ɤ
+v@      ə
+vE      ɛ
+v9      œ
+v3      ɜ
+v4      ɞ
+vV      ʌ
+vO      ɔ
+# Open
+v{      æ
+v6      ɐ
+v&      ɶ
+vA      ɑ
+vQ      ɒ
+v:      ː
+
+# Consonants
+
+# Nasal
+qF      ɱ
+qJ      ɲ
+qn      ŋ
+qN      ɴ
+# Plosive
+qt      ʈ
+qd      ɖ
+qG      ɢ
+# Fricative
+qf      ɸ
+qB      β
+qT      θ
+qD      ð
+qS      ʃ
+qZ      ʒ
+qz      ʐ
+qc      ç
+qj      ʝ
+qg      ɣ
+qx      χ
+qR      ʁ
+qh      ɦ
+# Approximant
+qv      ʋ
+qM      ɰ
+# Tap/flap/trill
+q5      ʀ
+qH      ʜ
+# Lateral
+qK      ɬ
+qr      ɽ
+ql      ɭ
+qy      ʎ
+qL      ʟ
+# Coarticulated
+qU      ɥ
+qW      ʍ
+
+
+# Mathematical
+
+>=      ≥
+<=      ≤
+<0      ≪
+>0      ≫
+=/      ≠
+=-      ≡
+~~      ≈
+
+
+
+# Punctuation
+
+<<      «
+>>      »   
+
+
+
+
+
+
+# ā   a-
+
+# å   a0
+# Å   A0
+# æ   ae
+# Æ   AE
+# ą   a,
+
+
+
+# ™   tm
+# ©   co
+# ®   ro
+# ñ   ny
+# µ   mu
+# ç   c,
+# Ç   C,
+# ¿   qq
+# ð   dh
+# Ð   DH
+# ß   ss
+# §   SS
+# þ   th
+# Þ   TH
+
+

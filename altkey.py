@@ -12,7 +12,7 @@ from sendinput import generate_keypress
 
 MODIFIERS = ('Lcontrol', 'Rcontrol', 'Lshift', 'Rshift', 'Lmenu', 'Rmenu')
 SHIFT = ('Lshift', 'Rshift')
-KEYMAP_FILE = "keymap.txt"
+KEYMAP_FILE = "keymap.txt" 
 hotkey = 'Rmenu' # AltGr
 
 
@@ -35,28 +35,29 @@ class KeymapParser():
             ld = line.decode().strip()
             ls = self.split_line(ld)
             if len(ls) == 2:
-                glyph = ls[0]
-                sequence = ls[1]
+                sequence = ls[0]
+                glyph = ls[1]
 
-                if glyph[0] == '[':
-                    # Group: [glyphs] [
-                    if glyph[-1] != ']':
-                        return False, f'line {self.lnum}: missing ] to close group'
-                    glyph_group = glyph[1:-1]
-                    if sequence[0] != '[':
-                        return False, f'line {self.lnum}: missing [ to start key group'
-                    if sequence[-2] != ']': #hacky pls fix
-                        return False, f'line {self.lnum}: missing ] to close key group'
-                    key_group = sequence[1:-2]
-                    final_key = sequence[-1]
+                if sequence[0] == '[':
+                    pass
+                    # # Group: [glyphs] [
+                    # if glyph[-1] != ']':
+                    #     return False, f'line {self.lnum}: missing ] to close group'
+                    # glyph_group = glyph[1:-1]
+                    # if sequence[0] != '[':
+                    #     return False, f'line {self.lnum}: missing [ to start key group'
+                    # if sequence[-2] != ']': #hacky pls fix
+                    #     return False, f'line {self.lnum}: missing ] to close key group'
+                    # key_group = sequence[1:-2]
+                    # final_key = sequence[-1]
 
-                    if len(glyph_group) != len(key_group):
-                        return False, f'line {self.lnum}: glyph and key groups must be the same length'
+                    # if len(glyph_group) != len(key_group):
+                    #     return False, f'line {self.lnum}: glyph and key groups must be the same length'
 
-                    for i in range(len(glyph_group)):
-                        if key_group[i] not in keymap:
-                            keymap[key_group[i]] = {}
-                        keymap[key_group[i]][final_key] = glyph_group[i]
+                    # for i in range(len(glyph_group)):
+                    #     if key_group[i] not in keymap:
+                    #         keymap[key_group[i]] = {}
+                    #     keymap[key_group[i]][final_key] = glyph_group[i]
 
                 else:
                     if len(glyph) != 1:
